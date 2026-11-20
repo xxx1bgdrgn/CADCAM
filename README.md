@@ -1,6 +1,9 @@
 # CADCAM
 
-独立的 Windows 二维激光 CAM 项目，使用 C++17、Qt 6 Widgets 和 Open CASCADE Technology（OCCT）。[二维激光 CAM 软件设计说明](docs/二维激光CAM软件设计说明.md)
+独立的 Windows 激光 CAM 项目，使用 C++17、Qt 6 Widgets 和 Open CASCADE Technology（OCCT）。仓库当前运行的是二维板材框架，三维管材是下一阶段的开发方向。
+
+- [二维板材激光 CAM 软件设计说明](docs/二维板材激光CAM软件设计说明.md)
+- [三维管材激光 CAM 软件设计说明](docs/三维管材激光CAM软件设计说明.md)
 
 当前框架提供 OCCT 画布、示例工程、底图／零件／板材／排样视图切换和基础撤销重做。双击左右列表中的条目即可切换视图。工具栏的「在底图添加矩形」可用来体验撤销和重做。
 
@@ -35,7 +38,7 @@ $env:PATH = "$qtPrefix/bin;$occtBin;$env:PATH"
 
 ## 后续实现
 
-设计说明列出了完整产品范围。DWG/DXF 导入、交互绘图工具、实际工艺与刀路计算、自动排样、`.camproj` 读写以及 G 代码后处理属于后续模块。
+二维板材设计说明记录了原方案的产品范围。三维管材的首个里程碑是导入真实 STEP 管件，确认管轴与切割轮廓，设置工艺，预览刀路并保存工程。
 
 ## 源码目录
 

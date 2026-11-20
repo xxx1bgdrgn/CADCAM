@@ -18,7 +18,7 @@ namespace cadcam {
 
 MainWindow::MainWindow()
 {
-    setWindowTitle(QStringLiteral("CADCAM · 二维激光工作台"));
+    setWindowTitle(QStringLiteral("CADCAM开放平台"));
     resize(1260, 820);
 
     auto* workspace = new QSplitter(this);
