@@ -8,7 +8,14 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
-add_library(cadcam_project src/Project.cpp)
+set(CADCAM_PROJECT_FILES
+    src/Features/Project/Project.cpp
+    src/Features/Project/Project.h
+    src/Features/Views/CurrentZone.cpp
+    src/Features/Views/CurrentZone.h
+    src/Geometry/Primitives.h
+)
+add_library(cadcam_project ${CADCAM_PROJECT_FILES})
 target_include_directories(cadcam_project PUBLIC src)
 
 include(CTest)
@@ -23,9 +30,49 @@ if(CADCAM_BUILD_DESKTOP)
     if(NOT WIN32)
         message(FATAL_ERROR "The OCCT viewport embeds a Windows native window.")
     endif()
+    list(APPEND CMAKE_PREFIX_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/ui/qt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/cad/occt")
     find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
     find_package(OpenCASCADE REQUIRED COMPONENTS FoundationClasses ModelingData ModelingAlgorithms Visualization)
-    qt_add_executable(CADCAM WIN32 src/main.cpp src/CadView.cpp)
-    target_include_directories(CADCAM PRIVATE "${OpenCASCADE_INCLUDE_DIR}")
-    target_link_libraries(CADCAM PRIVATE cadcam_project Qt6::Widgets TKTopAlgo TKGeomBase TKOpenGl TKV3d)
+    set(CADCAM_DESKTOP_FILES
+        ${CADCAM_PROJECT_FILES}
+        src/App/main.cpp
+        src/Common/Angles.h
+        src/Features/Editing/AddShapeCommand.h
+        src/Geometry/OcctGeometry.cpp
+        src/Geometry/OcctGeometry.h
+        src/Input/Mouse/CadViewMouse.cpp
+        src/Rendering/CadView.cpp
+        src/Rendering/CadView.h
+        src/UI/MainWindow.cpp
+        src/UI/MainWindow.h
+    )
+    qt_add_executable(CADCAM WIN32 ${CADCAM_DESKTOP_FILES})
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" FILES ${CADCAM_DESKTOP_FILES})
+    target_include_directories(CADCAM PRIVATE src "${OpenCASCADE_INCLUDE_DIR}")
+    target_link_libraries(CADCAM PRIVATE
+        Qt6::Widgets          # UI
+        TKTopAlgo TKGeomBase  # Geometry
+        TKOpenGl TKV3d        # Rendering
+    )
+    set_property(TARGET CADCAM PROPERTY VS_DEBUGGER_ENVIRONMENT
+        "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$<TARGET_FILE_DIR:TKernel>;%PATH%")
+
+    if(CMAKE_GENERATOR STREQUAL "Visual Studio 18 2026")
+        # The IDE solution must build the application without hidden project references.
+        set(CMAKE_SUPPRESS_REGENERATION ON)
+        file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ide/CADCAM.slnx" CONTENT [=[
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="MinSizeRel" />
+    <BuildType Name="RelWithDebInfo" />
+    <Platform Name="@CMAKE_VS_PLATFORM_NAME@" />
+  </Configurations>
+  <Project Path="../CADCAM.vcxproj" DefaultStartup="true" />
+</Solution>
+]=] @ONLY)
+    endif()
 endif()

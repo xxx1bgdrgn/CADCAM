@@ -6,19 +6,28 @@
 
 ## 构建
 
-准备 CMake 3.24 或以上、Visual Studio 2022 的 C++ x64 工具链、Qt 6 Widgets 的 MSVC x64 包和 OCCT 的 x64 开发包。需要在本机终端提供 Qt 安装前缀、`OpenCASCADEConfig.cmake` 所在目录和 OCCT 运行库目录。
+准备 CMake 4.2 或以上、Visual Studio 2026 的 MSVC v145 x64 工具链、Qt 6 Widgets 的 MSVC x64 包和 OCCT 的 x64 开发包。本机已验证 Qt 6.8.3 的 MSVC 2022 x64 包和 OCCT 7.9.3 可以链接到 VS 2026 编译的程序。
+
+| 用途 | 本地 SDK 目录 | 链接模块 |
+| --- | --- | --- |
+| UI | `third_party/ui/qt` | `Qt6::Widgets` |
+| 几何 | `third_party/cad/occt` | `TKTopAlgo`、`TKGeomBase` |
+| 渲染 | `third_party/cad/occt` | `TKOpenGl`、`TKV3d` |
+
+把 SDK 的 `include`、`lib` 和 `bin` 放在对应目录下。几何和渲染共用一份 OCCT SDK。CMake 会查找以上目录，这两套本地 SDK 由 Git 忽略。SDK 安装在其他位置时，可以显式指定 `CMAKE_PREFIX_PATH` 和 `OpenCASCADE_DIR`。
 
 ```powershell
-$qtPrefix = 'C:/sdk/Qt/msvc2022_64'
-$occtCmake = 'C:/sdk/occt/cmake'
-$occtBin = 'C:/sdk/occt/bin'
-cmake -S . -B build/desktop -G 'Visual Studio 17 2022' -A x64 "-DCMAKE_PREFIX_PATH=$qtPrefix" "-DOpenCASCADE_DIR=$occtCmake"
-cmake --build build/desktop --config Release
-ctest --test-dir build/desktop -C Release --output-on-failure
+cmake -S . -B build/vs2026 -G 'Visual Studio 18 2026' -A x64 -T v145
+cmake --build build/vs2026 --config Release
+ctest --test-dir build/vs2026 -C Release --output-on-failure
 
+$qtPrefix = Join-Path $PWD 'third_party/ui/qt'
+$occtBin = Join-Path $PWD 'third_party/cad/occt/bin'
 $env:PATH = "$qtPrefix/bin;$occtBin;$env:PATH"
-& ./build/desktop/Release/CADCAM.exe
+& ./build/vs2026/Release/CADCAM.exe
 ```
+
+用 Visual Studio 2026 打开生成的 `build/vs2026/ide/CADCAM.slnx`，其中只显示 `CADCAM` 桌面项目。测试通过上面的 CTest 命令运行。修改 CMake 构建配置后，重新执行配置命令。若旧的构建缓存还引用原来的 SDK 位置，在配置命令加上 `-U 'Qt6*' -U OpenCASCADE_DIR -U CMAKE_PREFIX_PATH` 后重新生成。
 
 如 OCCT 的第三方运行库位于单独目录，也将这些目录加入运行环境的 `PATH`。在 Windows 桌面环境可用 `CADCAM.exe --smoke` 检查四种视图和一次撤销重做。
 
@@ -27,3 +36,17 @@ $env:PATH = "$qtPrefix/bin;$occtBin;$env:PATH"
 ## 后续实现
 
 设计说明列出了完整产品范围。DWG/DXF 导入、交互绘图工具、实际工艺与刀路计算、自动排样、`.camproj` 读写以及 G 代码后处理属于后续模块。
+
+## 源码目录
+
+Visual Studio 中的分组与 `src/` 下的实际目录一致。
+
+| 目录 | 职责 |
+| --- | --- |
+| `App` | 程序启动入口 |
+| `UI` | 主窗口、工具栏和列表交互 |
+| `Features` | 工程数据、当前视图和编辑命令 |
+| `Geometry` | 基础图元及其 OCCT 几何构造 |
+| `Rendering` | OCCT 画布及图形显示 |
+| `Input/Mouse` | 画布的鼠标按下、拖动平移和滚轮缩放 |
+| `Common` | 跨模块使用的通用工具 |

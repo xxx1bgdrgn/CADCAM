@@ -1,11 +1,15 @@
 #pragma once
 
-#include "Project.h"
-
-#include <AIS_InteractiveContext.hxx>
-#include <V3d_View.hxx>
 #include <QPoint>
 #include <QWidget>
+#include <Standard_Handle.hxx>
+
+class AIS_InteractiveContext;
+class V3d_View;
+
+namespace cadcam {
+struct CurrentZone;
+}
 
 class CadView final : public QWidget
 {
@@ -25,6 +29,8 @@ protected:
 
 private:
     void initialize();
+    void zoomBy(double factor);
+    void panBy(int x, int y);
 
     Handle(AIS_InteractiveContext) context_;
     Handle(V3d_View) view_;
