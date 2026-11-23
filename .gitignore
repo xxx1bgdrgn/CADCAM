@@ -1,6 +1,9 @@
-/build/
-/out/
-/.vs/
-/CMakeUserPresets.json
-/third_party/ui/
-/third_party/cad/
+build/
+out/
+.vs/
+CMakeUserPresets.json
+/third_party/
+/CADCAM2D/third_party/
+/CADCAM3D/third_party/
+/CADCAM2D/CADCAM2D.sln
+/CADCAM3D/CADCAM3D.sln

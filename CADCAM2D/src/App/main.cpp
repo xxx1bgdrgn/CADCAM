@@ -9,7 +9,7 @@
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
-    QApplication::setApplicationName(QStringLiteral("CADCAM"));
+    QApplication::setApplicationName(QStringLiteral("CADCAM2D"));
     cadcam::MainWindow window;
     window.show();
 

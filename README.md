@@ -1,11 +1,16 @@
 # CADCAM
 
-独立的 Windows 激光 CAM 项目，使用 C++17、Qt 6 Widgets 和 Open CASCADE Technology（OCCT）。仓库当前运行的是二维板材框架，三维管材是下一阶段的开发方向。
+Windows 激光 CAM 工作台，使用 C++17、Qt 6 Widgets 和 Open CASCADE Technology（OCCT）。二维板材与三维管材各有自己的应用、构建目录和 Visual Studio 解决方案。
 
 - [二维板材激光 CAM 软件设计说明](docs/二维板材激光CAM软件设计说明.md)
 - [三维管材激光 CAM 软件设计说明](docs/三维管材激光CAM软件设计说明.md)
 
-当前框架提供 OCCT 画布、示例工程、底图／零件／板材／排样视图切换和基础撤销重做。双击左右列表中的条目即可切换视图。工具栏的「在底图添加矩形」可用来体验撤销和重做。
+| 目录 | 内容 |
+| --- | --- |
+| `CADCAM2D` | 二维画布、图元选择与框选、底图／零件／板材／排样视图和撤销重做。 |
+| `CADCAM3D` | 文件入口和最近 STEP、新建管件向导、九种标准截面建模、管端编号和视角立方体。按住滚轮拖动旋转，右键拖动平移，滚动滚轮缩放。 |
+| `common/Shape` | 两边共用的 `ShapeRecord`、图元类型、图形群组和工艺数据。各项目提供各自的二维或三维坐标与曲线参数。 |
+| `third_party/common` | 两边共用的 Qt 和 OCCT SDK。 |
 
 ## 构建
 
@@ -13,36 +18,41 @@
 
 | 用途 | 本地 SDK 目录 | 链接模块 |
 | --- | --- | --- |
-| UI | `third_party/ui/qt` | `Qt6::Widgets` |
-| 几何 | `third_party/cad/occt` | `TKTopAlgo`、`TKGeomBase` |
-| 渲染 | `third_party/cad/occt` | `TKOpenGl`、`TKV3d` |
+| UI | `third_party/common/ui/qt` | `Qt6::Widgets` |
+| CAD 和渲染 | `third_party/common/cad/occt` | `TKTopAlgo`、`TKGeomBase`、`TKOpenGl`、`TKV3d` |
+| 三维拉伸与 STEP | 同一份 OCCT SDK | `TKPrim`、`TKDESTEP`、`TKXCAF`，由三维项目链接 |
 
-把 SDK 的 `include`、`lib` 和 `bin` 放在对应目录下。几何和渲染共用一份 OCCT SDK。CMake 会查找以上目录，这两套本地 SDK 由 Git 忽略。SDK 安装在其他位置时，可以显式指定 `CMAKE_PREFIX_PATH` 和 `OpenCASCADE_DIR`。
+把 SDK 的 `include`、`lib`、`bin` 等目录放在对应位置。后续只给一个项目用的 SDK 放在 `CADCAM2D/third_party` 或 `CADCAM3D/third_party`，由该项目的 CMake 配置。SDK 和本机生成的构建文件由 Git 忽略。
+
+在仓库根目录运行下面的命令生成解决方案。两个 `.sln` 各包含一个应用项目，打开后可直接按 F5。修改 CMake 或换机器时重新执行配置脚本。
 
 ```powershell
-cmake -S . -B build/vs2026 -G 'Visual Studio 18 2026' -A x64 -T v145
-cmake --build build/vs2026 --config Release
-ctest --test-dir build/vs2026 -C Release --output-on-failure
-
-$qtPrefix = Join-Path $PWD 'third_party/ui/qt'
-$occtBin = Join-Path $PWD 'third_party/cad/occt/bin'
-$env:PATH = "$qtPrefix/bin;$occtBin;$env:PATH"
-& ./build/vs2026/Release/CADCAM.exe
+./Configure-VS.ps1
+./Configure-VS.ps1 -Project CADCAM3D # 只生成三维项目
 ```
 
-用 Visual Studio 2026 打开生成的 `build/vs2026/ide/CADCAM.slnx`，其中只显示 `CADCAM` 桌面项目。测试通过上面的 CTest 命令运行。修改 CMake 构建配置后，重新执行配置命令。若旧的构建缓存还引用原来的 SDK 位置，在配置命令加上 `-U 'Qt6*' -U OpenCASCADE_DIR -U CMAKE_PREFIX_PATH` 后重新生成。
+- 二维 `CADCAM2D/CADCAM2D.sln`
+- 三维 `CADCAM3D/CADCAM3D.sln`
 
-如 OCCT 的第三方运行库位于单独目录，也将这些目录加入运行环境的 `PATH`。在 Windows 桌面环境可用 `CADCAM.exe --smoke` 检查四种视图和一次撤销重做。
+命令行构建和测试可使用 VS 2026 的开发者 PowerShell。
 
-只构建工程模型和测试时，可加 `-DCADCAM_BUILD_DESKTOP=OFF`，使用独立的构建目录。
+```powershell
+cmake --build CADCAM2D/build/vs2026 --config Release
+ctest --test-dir CADCAM2D/build/vs2026 -C Release --output-on-failure
+cmake --build CADCAM3D/build/vs2026 --config Release
+```
+
+两个 EXE 都支持 `--smoke`。二维验证视图切换与撤销重做，三维验证直角及圆角管体、STEP 写入后重新导入和视图切换。从命令行直接运行时，将共用 SDK 的 `bin` 目录加到 `PATH`。
+
+二维项目可通过 `-DCADCAM_BUILD_DESKTOP=OFF` 单独构建工程模型和测试。
 
 ## 后续实现
 
-二维板材设计说明记录了原方案的产品范围。三维管材的首个里程碑是导入真实 STEP 管件，确认管轴与切割轮廓，设置工艺，预览刀路并保存工程。
+三维支持方矩管、圆管、椭圆管、腰形管、角钢、槽钢、工字钢、T 型钢和 H 型钢的参数创建，以及单实体 STEP 导入。工字钢和 H 型钢采用可输入腹板、翼缘尺寸的直边截面。下一阶段接入导入件的管轴与切割轮廓识别、异型管手绘截面、管材工艺和工程保存。
 
 ## 源码目录
 
-Visual Studio 中的分组与 `src/` 下的实际目录一致。
+Visual Studio 中的分组与每个项目 `src/` 下的实际目录一致。`Shared` 分组显示共用的 Shape 头文件。
 
 | 目录 | 职责 |
 | --- | --- |

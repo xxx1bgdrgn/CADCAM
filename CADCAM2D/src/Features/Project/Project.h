@@ -1,29 +1,15 @@
 #pragma once
 
 #include "Geometry/Primitives.h"
+#include "Shape/Shape.h"
 
-#include <cstdint>
 #include <string>
 #include <variant>
 #include <vector>
 
 namespace cadcam {
 
-using Id = std::uint64_t;
-
-enum class CompensationSide { Inside, Outside };
-struct Compensation { CompensationSide side; double distance; };
-enum class LeadStyle { Line, Arc };
-struct LeadIn { LeadStyle style; double length; double angleDegrees; };
-struct LeadOut { LeadStyle style; double length; double angleDegrees; };
-using Operation = std::variant<Compensation, LeadIn, LeadOut>;
-
-struct Shape
-{
-    Id id;
-    std::variant<Primitive, std::vector<Shape>> content;
-    std::vector<Operation> operations;
-};
+using Shape = ShapeRecord<Primitive>;
 
 struct Part { Id id; std::string name; std::vector<Shape> shapes; };
 struct Sheet { Id id; std::string name; Point size; };
