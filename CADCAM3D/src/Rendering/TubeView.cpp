@@ -1,14 +1,17 @@
 #include "Rendering/TubeView.h"
 
 #include "Features/Project/TubePart.h"
+#include "Rendering/ContourColor.h"
 
 #include <AIS_InteractiveContext.hxx>
+#include <AIS_Point.hxx>
 #include <AIS_Shape.hxx>
 #include <AIS_TextLabel.hxx>
 #include <AIS_ViewCube.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <Bnd_Box.hxx>
+#include <Geom_CartesianPoint.hxx>
 #include <Graphic3d_TransformPers.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <Prs3d_Drawer.hxx>
@@ -22,6 +25,49 @@
 #include <cmath>
 
 namespace cadcam3d {
+namespace {
+
+gp_Pnt toPoint(const Point& point)
+{
+    return {point.x, point.y, point.z};
+}
+
+void displayShape(const Handle(AIS_InteractiveContext)& context, const Shape& shape)
+{
+    if (const auto* children = std::get_if<std::vector<Shape>>(&shape.content)) {
+        for (const auto& child : *children) {
+            displayShape(context, child);
+        }
+        return;
+    }
+
+    const auto& primitive = std::get<Primitive>(shape.content);
+    Handle(AIS_InteractiveObject) display;
+    if (const auto* rectangle = std::get_if<Rectangle>(&primitive)) {
+        BRepBuilderAPI_MakePolygon polygon;
+        for (const auto& point : rectangle->vertices) {
+            polygon.Add(toPoint(point));
+        }
+        polygon.Close();
+        display = new AIS_Shape(polygon.Wire());
+    } else if (const auto* wire = std::get_if<TopoDS_Wire>(&primitive)) {
+        display = new AIS_Shape(*wire);
+    } else if (const auto* point = std::get_if<Point>(&primitive)) {
+        display = new AIS_Point(new Geom_CartesianPoint(toPoint(*point)));
+    } else if (const auto* text = std::get_if<Text>(&primitive)) {
+        if (!text->surfaceContours.IsNull()) {
+            display = new AIS_Shape(text->surfaceContours);
+        }
+    }
+    if (!display.IsNull()) {
+        display->SetColor(cadcam::occtContourColor());
+        display->SetWidth(std::holds_alternative<Text>(primitive) ? 1.0 : 2.0);
+        display->SetZLayer(Graphic3d_ZLayerId_Top);
+        context->Display(display, false);
+    }
+}
+
+}
 
 TubeView::TubeView(QWidget* parent) : QWidget(parent)
 {
@@ -74,11 +120,11 @@ void TubeView::draw(const TubePart& part)
     context_->Display(body, AIS_Shaded, 0, false);
 
     if (part.ends) {
-        const Quantity_Color accent(1.0, 0.78, 0.32, Quantity_TOC_sRGB);
+        const auto endColor = cadcam::occtContourColor();
         for (std::size_t i = 0; i < part.ends->outlines.size(); ++i) {
             const auto& wire = part.ends->outlines[i];
             const Handle(AIS_Shape) outline = new AIS_Shape(wire);
-            outline->SetColor(accent);
+            outline->SetColor(endColor);
             outline->SetWidth(2.0);
             outline->SetZLayer(Graphic3d_ZLayerId_Top);
             context_->Display(outline, AIS_WireFrame, -1, false);
@@ -91,7 +137,7 @@ void TubeView::draw(const TubePart& part)
             label->SetText(TCollection_ExtendedString(i == 0 ? "1" : "2"));
             label->SetPosition(gp_Pnt(i == 0 ? 0 : part.ends->length, (top.Y() + bottom.Y()) / 2,
                 top.Z() + 0.12 * (top.Z() - bottom.Z())));
-            label->SetColor(accent);
+            label->SetColor(endColor);
             label->SetHeight(16);
             label->SetInfiniteState(true);
             label->SetZLayer(Graphic3d_ZLayerId_Topmost);
@@ -100,26 +146,14 @@ void TubeView::draw(const TubePart& part)
     }
 
     for (const auto& shape : part.shapes) {
-        const auto* primitive = std::get_if<Primitive>(&shape.content);
-        const auto* rectangle = primitive ? std::get_if<Rectangle>(primitive) : nullptr;
-        if (rectangle) {
-            BRepBuilderAPI_MakePolygon polygon;
-            for (const auto& point : rectangle->vertices) {
-                polygon.Add(gp_Pnt(point.x, point.y, point.z));
-            }
-            polygon.Close();
-            const Handle(AIS_Shape) outline = new AIS_Shape(polygon.Wire());
-            outline->SetColor(Quantity_NOC_ORANGE);
-            outline->SetWidth(2.0);
-            outline->SetZLayer(Graphic3d_ZLayerId_Top);
-            context_->Display(outline, false);
-        }
+        displayShape(context_, shape);
     }
 
     const Handle(AIS_ViewCube) cube = new AIS_ViewCube();
-    cube->SetSize(49);
+    const bool compact = width() < 340;
+    cube->SetSize(compact ? 33 : 49);
     cube->SetTransformPersistence(new Graphic3d_TransformPers(Graphic3d_TMF_TriedronPers,
-        Aspect_TOTP_RIGHT_LOWER, Graphic3d_Vec2i(82, 73)));
+        Aspect_TOTP_RIGHT_LOWER, compact ? Graphic3d_Vec2i(54, 51) : Graphic3d_Vec2i(82, 73)));
     context_->Display(cube, false);
 
     view_->FitAll(0.12, false);

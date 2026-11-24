@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Geometry/Primitives.h"
+#include "Shape/Primitives2D.h"
 #include "Shape/Shape.h"
 
 #include <string>

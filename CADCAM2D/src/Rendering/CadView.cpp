@@ -2,7 +2,8 @@
 
 #include "Common/Angles.h"
 #include "Features/Views/CurrentZone.h"
-#include "Geometry/OcctGeometry.h"
+#include "Rendering/ContourColor.h"
+#include "Shape/OcctGeometry2D.h"
 
 #include <AIS_ConnectedInteractive.hxx>
 #include <AIS_InteractiveContext.hxx>
@@ -147,7 +148,7 @@ void CadView::initialize()
     viewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
     viewer->SetGridEcho(false);
     context_->SetPixelTolerance(5);
-    context_->SelectionStyle()->SetColor(Quantity_NOC_YELLOW);
+    context_->SelectionStyle()->SetColor(occtContourColor());
     selectionBox_ = new AIS_RubberBand();
     selectionBox_->SetTransformPersistence(
         new Graphic3d_TransformPers(Graphic3d_TMF_2d, Aspect_TOTP_LEFT_UPPER));
@@ -190,7 +191,7 @@ void CadView::draw(const cadcam::CurrentZone& zone)
         }
         const Quantity_Color tint = item.role == RenderRole::SheetBoundary
             ? Quantity_Color(0.43, 0.58, 0.72, Quantity_TOC_RGB)
-            : Quantity_Color(0.31, 0.89, 0.78, Quantity_TOC_RGB);
+            : occtContourColor();
         displayObject->SetColor(tint);
         if (item.role == RenderRole::SheetBoundary) {
             context_->Display(displayObject, 0, -1, false);

@@ -13,9 +13,15 @@ set(CADCAM_PROJECT_FILES
     src/Features/Project/Project.h
     src/Features/Views/CurrentZone.cpp
     src/Features/Views/CurrentZone.h
-    src/Geometry/Primitives.h
 )
-set(CADCAM_SHARED_FILES ../common/Shape/Primitives.h ../common/Shape/Shape.h)
+set(CADCAM_SHARED_FILES
+    ../common/Common/Angles.h
+    ../common/Rendering/ContourColor.h
+    ../common/Shape/Primitives.h
+    ../common/Shape/Primitives2D.h
+    ../common/Shape/Shape.h
+    ../common/Shape/OcctGeometry2D.h
+    ../common/Shape/OcctGeometry2D.cpp)
 add_library(cadcam_project ${CADCAM_PROJECT_FILES})
 target_include_directories(cadcam_project PUBLIC src ../common)
 
@@ -36,10 +42,7 @@ if(CADCAM_BUILD_DESKTOP)
     set(CADCAM_DESKTOP_FILES
         ${CADCAM_PROJECT_FILES}
         src/App/main.cpp
-        src/Common/Angles.h
         src/Features/Editing/AddShapeCommand.h
-        src/Geometry/OcctGeometry.cpp
-        src/Geometry/OcctGeometry.h
         src/Input/Mouse/CadViewMouse.cpp
         src/Rendering/CadView.cpp
         src/Rendering/CadView.h

@@ -24,14 +24,25 @@ set(CADCAM_DESKTOP_FILES
     src/Geometry/Primitives3D.h
     src/Geometry/TubeGeometry.cpp
     src/Geometry/TubeGeometry.h
+    src/Geometry/TubeUnfold.cpp
+    src/Geometry/TubeUnfold.h
     src/Rendering/TubeView.cpp
     src/Rendering/TubeView.h
     src/UI/MainWindow.cpp
     src/UI/MainWindow.h
     src/UI/TubeWizard.cpp
-    src/UI/TubeWizard.h)
+    src/UI/TubeWizard.h
+    src/UI/UnfoldEditor.cpp
+    src/UI/UnfoldEditor.h)
 
-set(CADCAM_SHARED_FILES ../common/Shape/Primitives.h ../common/Shape/Shape.h)
+set(CADCAM_SHARED_FILES
+    ../common/Common/Angles.h
+    ../common/Rendering/ContourColor.h
+    ../common/Shape/Primitives.h
+    ../common/Shape/Primitives2D.h
+    ../common/Shape/Shape.h
+    ../common/Shape/OcctGeometry2D.h
+    ../common/Shape/OcctGeometry2D.cpp)
 qt_add_executable(CADCAM3D WIN32 ${CADCAM_DESKTOP_FILES} ${CADCAM_SHARED_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" FILES ${CADCAM_DESKTOP_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../common" PREFIX "Shared" FILES ${CADCAM_SHARED_FILES})

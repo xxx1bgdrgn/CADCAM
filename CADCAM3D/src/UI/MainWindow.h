@@ -5,6 +5,7 @@
 #include <QMainWindow>
 
 class QComboBox;
+class QAction;
 class QListWidget;
 class QToolBar;
 
@@ -23,11 +24,13 @@ private:
     void createPart();
     void openStep();
     void openStep(const QString& path);
+    void editUnfolded();
     void addFileMenu(QToolBar* toolbar);
     void addPart(const QString& name, TubePart part);
 
     QListWidget* partsList_;
     QComboBox* typePicker_;
+    QAction* unfoldAction_;
     TubeView* view_;
     std::vector<TubePart> parts_;
 };

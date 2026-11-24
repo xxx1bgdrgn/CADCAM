@@ -1,4 +1,4 @@
-#include "Geometry/OcctGeometry.h"
+#include "Shape/OcctGeometry2D.h"
 
 #include "Common/Angles.h"
 

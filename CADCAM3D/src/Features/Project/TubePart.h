@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Geometry/Primitives3D.h"
+#include "Shape/Primitives2D.h"
 
 #include <TopoDS_Shape.hxx>
 
@@ -19,6 +20,8 @@ struct TubeEnds
     double length;
 };
 
+using SketchShape = cadcam::ShapeRecord<cadcam::Primitive>;
+
 struct TubePart
 {
     TubeSource source;
@@ -26,6 +29,7 @@ struct TubePart
     TopoDS_Shape body;
     std::vector<Shape> shapes;
     std::optional<TubeEnds> ends;
+    std::vector<SketchShape> unfoldedShapes;
 };
 
 }

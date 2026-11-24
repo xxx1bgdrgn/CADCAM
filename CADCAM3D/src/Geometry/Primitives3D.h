@@ -16,7 +16,14 @@ struct Plane { Point origin; Direction normal; Direction xDirection; };
 struct Circle { Plane plane; double radius; };
 struct Rectangle { std::array<Point, 4> vertices; };
 struct RoundedRectangle { Plane plane; double width; double height; double radius; };
-struct Text { Plane plane; std::string utf8; std::string font; double height; };
+struct Text
+{
+    Plane plane;
+    std::string utf8;
+    std::string font;
+    double height;
+    TopoDS_Shape surfaceContours;
+};
 struct Ellipse { Plane plane; double majorRadius; double minorRadius; };
 struct EllipticalArc { Ellipse ellipse; double startParameter; double endParameter; };
 
